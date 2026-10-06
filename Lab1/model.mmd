@@ -1,7 +1,7 @@
 erDiagram
     USER ||--o{ LIBRARY_ENTRY : has
     GAME ||--o{ LIBRARY_ENTRY : appears_in
-    GAME }o--|{ GENRE : belongs_to
+    GAME }o..|{ GENRE : belongs_to
 
     USER {
         int id PK
