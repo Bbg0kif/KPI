@@ -1,0 +1,29 @@
+erDiagram
+    USER ||--o{ LIBRARY_ENTRY : has
+    GAME ||--o{ LIBRARY_ENTRY : appears_in
+    GAME }o--|{ GENRE : belongs_to
+
+    USER {
+        int id PK
+        string username
+        string email UK
+    }
+
+    GAME {
+        int id PK
+        string title
+        string description
+        date release_date
+    }
+
+    GENRE {
+        int id PK
+        string name UK
+    }
+
+    LIBRARY_ENTRY {
+        int user_id PK, FK
+        int game_id PK, FK
+        datetime added_at
+        string status
+    }
