@@ -27,7 +27,9 @@ sequenceDiagram
 
     opt Доступ дозволено, гра існує, запис відсутній
         LS->>LS: getCurrentTime()
-        Note right of LS: Поточний час T
+        activate LS
+        LS-->>LS: T
+        deactivate LS
 
         LS->>LR: create(ownerId, gameId, planned, T)
         activate LR
