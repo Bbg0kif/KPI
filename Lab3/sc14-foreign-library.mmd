@@ -1,0 +1,25 @@
+sequenceDiagram
+    actor User as Користувач A
+    participant UI as Інтерфейс
+    participant LS as LibraryService
+
+    Note over User,LS: SC14: спроба додавання до бібліотеки B
+
+    User->>UI: addGame(gameId, ownerIdB)
+    activate UI
+    UI->>LS: addGame(sessionContext, ownerIdB, gameId)
+    activate LS
+
+    LS->>LS: getAuthenticatedUserId(sessionContext)
+    activate LS
+    LS-->>LS: userIdA
+    deactivate LS
+
+    opt userIdA не дорівнює ownerIdB
+        Note right of LS: Вміст бібліотеки B не читається і не змінюється
+        LS-->>UI: accessDenied()
+        UI-->>User: Доступ до чужої бібліотеки заборонено
+    end
+
+    deactivate LS
+    deactivate UI
