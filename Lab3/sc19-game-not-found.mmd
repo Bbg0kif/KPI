@@ -1,0 +1,29 @@
+sequenceDiagram
+    actor User as Користувач
+    participant UI as Інтерфейс
+    participant LS as LibraryService
+    participant GR as GameRepository
+
+    Note over User,LS: SC19: додавання гри з id 999
+
+    User->>UI: addGame(999)
+    activate UI
+    UI->>LS: addGame(sessionContext, ownerId, 999)
+    activate LS
+
+    LS->>LS: checkAccess(sessionContext, ownerId)
+    Note right of LS: Авторизацію та власника перевірено
+
+    LS->>GR: findById(999)
+    activate GR
+    GR-->>LS: null
+    deactivate GR
+
+    opt Гри немає в каталозі
+        Note right of LS: LIBRARY_ENTRY не створюється
+        LS-->>UI: gameNotFound()
+        UI-->>User: Додавання відхилено: гри немає в каталозі
+    end
+
+    deactivate LS
+    deactivate UI
