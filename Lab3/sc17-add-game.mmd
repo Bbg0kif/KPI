@@ -1,0 +1,42 @@
+sequenceDiagram
+    actor User as Користувач
+    participant UI as Інтерфейс
+    participant LS as LibraryService
+    participant GR as GameRepository
+    participant LR as LibraryEntryRepository
+
+    Note over User,LS: SC17: додавання Portal до власної бібліотеки
+
+    User->>UI: addGame(gameId)
+    activate UI
+    UI->>LS: addGame(sessionContext, ownerId, gameId)
+    activate LS
+
+    LS->>LS: checkAccess(sessionContext, ownerId)
+    Note right of LS: Авторизацію та власника перевірено
+
+    LS->>GR: findById(gameId)
+    activate GR
+    GR-->>LS: game
+    deactivate GR
+
+    LS->>LR: findByUserAndGame(ownerId, gameId)
+    activate LR
+    LR-->>LS: null
+    deactivate LR
+
+    opt Доступ дозволено, гра існує, запис відсутній
+        LS->>LS: getCurrentTime()
+        Note right of LS: Поточний час T
+
+        LS->>LR: create(ownerId, gameId, planned, T)
+        activate LR
+        LR-->>LS: createdEntry
+        deactivate LR
+
+        LS-->>UI: success(createdEntry)
+        UI-->>User: Гру додано до бібліотеки
+    end
+
+    deactivate LS
+    deactivate UI
