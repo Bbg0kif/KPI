@@ -10,9 +10,12 @@ sequenceDiagram
     UI->>LS: addGame(sessionContext, ownerId, gameId)
     activate LS
 
-    LS->>LS: checkAccess(sessionContext, ownerId)
+    LS->>LS: getAuthenticatedUserId(sessionContext)
+    activate LS
+    LS-->>LS: null
+    deactivate LS
 
-    opt У сеансі немає авторизованого користувача
+    opt Авторизованого користувача немає
         Note right of LS: Дані бібліотеки не читаються і не змінюються
         LS-->>UI: authenticationRequired()
         UI-->>Visitor: Для додавання гри потрібно увійти

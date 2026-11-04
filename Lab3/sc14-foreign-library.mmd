@@ -10,8 +10,10 @@ sequenceDiagram
     UI->>LS: addGame(sessionContext, ownerIdB, gameId)
     activate LS
 
-    LS->>LS: checkAccess(sessionContext, ownerIdB)
-    Note right of LS: Із перевіреного сеансу отримано userIdA
+    LS->>LS: getAuthenticatedUserId(sessionContext)
+    activate LS
+    LS-->>LS: userIdA
+    deactivate LS
 
     opt userIdA не дорівнює ownerIdB
         Note right of LS: Вміст бібліотеки B не читається і не змінюється
