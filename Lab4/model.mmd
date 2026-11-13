@@ -1,0 +1,76 @@
+flowchart TD
+    Start(("Початок"))
+
+    Receive["«accept event» Інтерфейс: отримати запит користувача"]
+    Forward["Інтерфейс: передати запит до LibraryService"]
+    Identity["LibraryService: визначити userId із сеансу"]
+
+    Auth{"Користувач авторизований?"}
+    Owner{"userId дорівнює ownerId?"}
+
+    FindGame["GameRepository: знайти гру за gameId"]
+    GameExists{"Гра існує?"}
+
+    FindEntry["LibraryEntryRepository: знайти запис за ownerId і gameId"]
+    EntryExists{"Запис уже існує?"}
+
+    Fork@{ shape: fork, label: "Почати обидві дії" }
+    Status["LibraryService: підготувати status = planned"]
+    Time["LibraryService: отримати T = getCurrentTime()"]
+    Join@{ shape: join, label: "Дочекатися обох дій" }
+
+    Create["LibraryEntryRepository: create(ownerId, gameId, planned, T)"]
+
+    Success["SC17: success(createdEntry)"]
+    LoginRequired["SC13: authenticationRequired()"]
+    AccessDenied["SC14: accessDenied()"]
+    GameMissing["SC19: gameNotFound()"]
+    Duplicate["SC18: duplicateEntry(); запис не змінювати"]
+
+    Merge{"Об’єднання альтернатив"}
+    ReturnResult["LibraryService: повернути результат інтерфейсу"]
+    Prepare["Інтерфейс: підготувати повідомлення за результатом"]
+    Send["«send signal» Інтерфейс → користувач: надіслати повідомлення"]
+
+    Finish((("Кінець")))
+
+    Start --> Receive
+    Receive --> Forward
+    Forward --> Identity
+    Identity --> Auth
+
+    Auth -->|"Так"| Owner
+    Auth -->|"Ні"| LoginRequired
+
+    Owner -->|"Так"| FindGame
+    Owner -->|"Ні"| AccessDenied
+
+    FindGame --> GameExists
+    GameExists -->|"Так"| FindEntry
+    GameExists -->|"Ні"| GameMissing
+
+    FindEntry --> EntryExists
+    EntryExists -->|"Так"| Duplicate
+    EntryExists -->|"Ні"| Fork
+
+    Fork --> Status
+    Fork --> Time
+    Status --> Join
+    Time --> Join
+
+    Join --> Create
+    Create --> Success
+
+    Success --> Merge
+    LoginRequired --> Merge
+    AccessDenied --> Merge
+    GameMissing --> Merge
+    Duplicate --> Merge
+
+    Merge --> ReturnResult
+    ReturnResult --> Prepare
+    Prepare --> Send
+    Send -->|"Без очікування відповіді користувача"| Finish
+
+    style Fork fill:#222,stroke:#222
+    style Join fill:#222,stroke:#222
