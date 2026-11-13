@@ -3,26 +3,57 @@ sequenceDiagram
     participant UI as Інтерфейс
     participant LS as LibraryService
     participant GR as GameRepository
+    participant LR as LibraryEntryRepository
 
     Note over User,LS: SC19: додавання гри з id 999
+    Note over User,LS: Користувач авторизований, бібліотека власна
 
     User->>UI: addGame(999)
     activate UI
     UI->>LS: addGame(sessionContext, ownerId, 999)
     activate LS
 
-    LS->>LS: checkAccess(sessionContext, ownerId)
-    Note right of LS: Авторизацію та власника перевірено
+    LS->>LS: access = checkAccess(sessionContext, ownerId)
 
-    LS->>GR: findById(999)
-    activate GR
-    GR-->>LS: null
-    deactivate GR
+    alt Доступ дозволено
+        LS->>GR: findById(999)
+        activate GR
+        GR-->>LS: game або null
+        deactivate GR
 
-    opt Гри немає в каталозі
-        Note right of LS: LIBRARY_ENTRY не створюється
-        LS-->>UI: gameNotFound()
-        UI-->>User: Додавання відхилено: гри немає в каталозі
+        alt Гра відсутня — шлях SC19
+            Note right of LS: LIBRARY_ENTRY не створюється
+            LS-->>UI: gameNotFound()
+            UI-->>User: Додавання відхилено: гри немає в каталозі
+
+        else Гра існує
+            LS->>LR: findByUserAndGame(ownerId, 999)
+            activate LR
+            LR-->>LS: entry або null
+            deactivate LR
+
+            alt Запис уже існує
+                LS-->>UI: duplicateEntry()
+                UI-->>User: Гра вже є у бібліотеці
+
+            else Запис відсутній
+                LS->>LS: T = getCurrentTime()
+                LS->>LR: create(ownerId, 999, planned, T)
+                activate LR
+                LR-->>LS: createdEntry
+                deactivate LR
+                LS-->>UI: success(createdEntry)
+                UI-->>User: Гру додано до бібліотеки
+            end
+        end
+
+    else Потрібен вхід
+        LS-->>UI: authenticationRequired()
+        UI-->>User: Для додавання гри потрібно увійти
+
+    else Бібліотека належить іншому користувачу
+        LS-->>UI: accessDenied()
+        UI-->>User: Доступ до чужої бібліотеки заборонено
     end
 
     deactivate LS
