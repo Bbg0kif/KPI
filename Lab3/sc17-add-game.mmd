@@ -5,7 +5,8 @@ sequenceDiagram
     participant GR as GameRepository
     participant LR as LibraryEntryRepository
 
-    Note over User,LS: SC17: додавання Portal до власної бібліотеки
+    Note over User,LS: SC17: успішне додавання Portal
+    Note over User,LS: Користувач авторизований, бібліотека власна
 
     User->>UI: addGame(gameId)
     activate UI
@@ -13,32 +14,38 @@ sequenceDiagram
     activate LS
 
     LS->>LS: checkAccess(sessionContext, ownerId)
-    Note right of LS: Авторизацію та власника перевірено
 
-    LS->>GR: findById(gameId)
-    activate GR
-    GR-->>LS: game
-    deactivate GR
+    alt Доступ дозволено
+        LS->>GR: findById(gameId)
+        activate GR
+        GR-->>LS: game
+        deactivate GR
 
-    LS->>LR: findByUserAndGame(ownerId, gameId)
-    activate LR
-    LR-->>LS: null
-    deactivate LR
+        alt Гра існує
+            LS->>LR: findByUserAndGame(ownerId, gameId)
+            activate LR
+            LR-->>LS: entry або null
+            deactivate LR
 
-    opt Доступ дозволено, гра існує, запис відсутній
-        LS->>LS: getCurrentTime()
-        activate LS
-        LS-->>LS: T
-        deactivate LS
+            alt Запис відсутній — шлях SC17
+                LS->>LS: T = getCurrentTime()
+                LS->>LR: create(ownerId, gameId, planned, T)
+                activate LR
+                LR-->>LS: createdEntry
+                deactivate LR
+                LS-->>UI: success(createdEntry)
+            else Запис уже існує
+                LS-->>UI: duplicateEntry()
+            end
 
-        LS->>LR: create(ownerId, gameId, planned, T)
-        activate LR
-        LR-->>LS: createdEntry
-        deactivate LR
+        else Гра відсутня
+            LS-->>UI: gameNotFound()
+        end
 
-        LS-->>UI: success(createdEntry)
-        UI-->>User: Гру додано до бібліотеки
+    else Доступ заборонено
+        LS-->>UI: accessDenied()
     end
 
     deactivate LS
+    UI-->>User: Показати результат додавання
     deactivate UI
