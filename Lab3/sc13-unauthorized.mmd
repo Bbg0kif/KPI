@@ -1,0 +1,27 @@
+sequenceDiagram
+    actor Visitor as Відвідувач
+    participant UI as Інтерфейс
+    participant LS as LibraryService
+
+    Note over Visitor,LS: SC13: додавання без авторизації
+
+    Visitor->>UI: addGame(gameId)
+    activate UI
+    UI->>LS: addGame(sessionContext, ownerId, gameId)
+    activate LS
+
+    LS->>LS: userId = getAuthenticatedUserId(sessionContext)
+
+    alt userId == null
+        Note right of LS: Шлях SC13: дані не читаються і не змінюються
+        LS-->>UI: authenticationRequired()
+        UI-->>Visitor: Для додавання гри потрібно увійти
+    else userId != null
+        LS->>LS: result = processAuthorizedAddition(userId, ownerId, gameId)
+        Note right of LS: Перевірка власника, гри та запису бібліотеки
+        LS-->>UI: result
+        UI-->>Visitor: Показати результат
+    end
+
+    deactivate LS
+    deactivate UI
