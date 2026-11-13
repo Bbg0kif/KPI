@@ -18,7 +18,7 @@ sequenceDiagram
     alt Доступ дозволено
         LS->>GR: findById(gameId)
         activate GR
-        GR-->>LS: game
+        GR-->>LS: game або null
         deactivate GR
 
         alt Гра існує
