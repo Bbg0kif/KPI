@@ -1,0 +1,104 @@
+@startuml
+top to bottom direction
+
+skinparam linetype polyline
+skinparam componentStyle uml2
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam nodesep 35
+skinparam ranksep 45
+
+title Архітектура каталогу відеоігор та бібліотеки користувача
+
+actor "Користувач" as User
+
+rectangle "Каталог відеоігор та бібліотека користувача" {
+
+    component "WebUI" as UI
+
+    package "Backend — один застосунок" {
+
+        package "API" as ApiLayer {
+            interface "IApplicationAPI" as IAPI
+            component "BackendAPI" as API
+        }
+
+        package "Сервіси" {
+            interface "ICatalog" as ICatalog
+            interface "ILibrary" as ILibrary
+            interface "IAuthentication" as IAuth
+
+            component "CatalogService" as Catalog
+            component "LibraryService" as Library
+            component "AuthService" as Auth
+        }
+
+        package "Data Access" {
+            interface "IGameRepository" as IGame
+            interface "ILibraryEntryRepository" as IEntry
+            interface "IUserRepository" as IUser
+
+            component "GameRepository" as GameRepo
+            component "LibraryEntryRepository" as EntryRepo
+            component "UserRepository" as UserRepo
+        }
+    }
+
+    interface "ISqlDataAccess" as ISql
+    database "Database" as DB
+}
+
+package "Зовнішня система" {
+    interface "IExternalIdentity" as IIdentity
+    component "IdentityProvider" as Provider
+}
+
+User -- UI : взаємодіє
+
+UI ..> IAPI : HTTP
+IAPI -- API
+
+API ..> ICatalog
+API ..> ILibrary
+API ..> IAuth
+
+ICatalog -- Catalog
+ILibrary -- Library
+IAuth -- Auth
+
+Catalog ..> IGame
+Library ..> IGame
+Library ..> IEntry
+Auth ..> IUser
+
+IGame -- GameRepo
+IEntry -- EntryRepo
+IUser -- UserRepo
+
+GameRepo ..> ISql
+EntryRepo ..> ISql
+UserRepo ..> ISql
+ISql -- DB
+
+Auth ..> IIdentity
+IIdentity -- Provider
+
+note bottom of DB
+  Дані:
+  USER, GAME, GENRE, LIBRARY_ENTRY.
+
+  Ключ LIBRARY_ENTRY:
+  (user_id, game_id).
+end note
+
+legend bottom
+  Кружечок — інтерфейс.
+  Суцільна лінія до інтерфейсу — компонент надає його (provided).
+  Пунктирна стрілка до інтерфейсу — компонент потребує його (required).
+
+  Зв’язки показують залежності, а не порядок виконання.
+  Сервіси та репозиторії — внутрішні модулі одного Backend.
+  IdentityProvider розташований поза межею нашої системи.
+endlegend
+
+@enduml
